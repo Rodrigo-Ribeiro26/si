@@ -1,86 +1,88 @@
+import sys
+sys.path.append("C:\\Users\\rodri\\Desktop\\Mestrado\\SIB\\si\\src\\si\\data")
+
+import numpy as np
 import pandas as pd
+from dataset import Dataset
+from typing import Union
 
-from si.data.dataset import Dataset
 
 
-def read_csv(filename: str,
-             sep: str = ',',
-             features: bool = False,
-             label: bool = False) -> Dataset:
+def read_csv(filename:str, sep:str = ",", features:bool = True, label:Union[None,int] = -1) -> object:
     """
-    Reads a csv file (data file) into a Dataset object
-
+    Reads a csv file containing a dataframe and returns a Dataset object.
+    
     Parameters
     ----------
-    filename : str
-        Path to the file
-    sep : str, optional
-        The separator used in the file, by default ','
-    features : bool, optional
-        Whether the file has a header, by default False
-    label : bool, optional
-        Whether the file has a label, by default False
-
-    Returns
-    -------
-    Dataset
-        The dataset object
+    :param filename: The path of the desired csv file.
+    :param sep: The string value that seperates each column.
+    :param features: Boolean indicating if the feature names are present or not in the file
+                     (It is assumed that feature names are present in the first column of the file).
+    :param label: The index of the column to be used as the dependent variable (y). Has the value "None" if this is not the case.
+                  TIP: Use -1 to select last column.
     """
-    data = pd.read_csv(filename, sep=sep)
-
-    if features and label:
-        features = data.columns[:-1]
-        label = data.columns[-1]
-        X = data.iloc[:, :-1].to_numpy()
-        y = data.iloc[:, -1].to_numpy()
-
-    elif features and not label:
-        features = data.columns
-        X = data.to_numpy()
-        y = None
-
-    elif not features and label:
-        X = data.iloc[:, :-1].to_numpy()
-        y = data.iloc[:, -1].to_numpy()
-        features = None
-        label = None
-
-    else:
-        X = data.to_numpy()
-        y = None
-        features = None
-        label = None
-
-    return Dataset(X, y, features=features, label=label)
-
-
-def write_csv(filename: str,
-              dataset: Dataset,
-              sep: str = ',',
-              features: bool = False,
-              label: bool = False) -> None:
-    """
-    Writes a Dataset object to a csv file
-
-    Parameters
-    ----------
-    filename : str
-        Path to the file
-    dataset : Dataset
-        The dataset object
-    sep : str, optional
-        The separator used in the file, by default ','
-    features : bool, optional
-        Whether the file has a header, by default False
-    label : bool, optional
-        Whether the file has a label, by default False
-    """
-    data = pd.DataFrame(dataset.X)
-
     if features:
-        data.columns = dataset.features
-
+        row = 0
+    else:
+        row = None
+    
+    data = pd.read_csv(filename, sep = sep, header = row)
+    
+    #Get columns names:
+    y_title = False
+    feat = None
+    
     if label:
-        data[dataset.label] = dataset.y
+        if features:
+            feat = [elem for ix,elem in enumerate(data.columns) if ix != label]
+            y_title = data.columns[label]
+    else:
+        if features:
+            feat = list(data.columns)          
+        
+ 
+    
+    
+    #Seperate data (X and y variables) if needed:
+    data = data.to_numpy()
+    if not label:
+        y = None
+    else:
+        y = data[:,label]
+        data = np.delete(data, label, axis=1)
+        
+    return Dataset(data, y, feat, y_title)
 
-    data.to_csv(filename, sep=sep, index=False)
+
+def write_csv(filename:str, dataset:object, sep:str = ",", features:bool = True, label:bool = False):
+    """
+    Saves the chosen dataset to a csv file.
+    
+    Parameters
+    ----------
+    :param filename: The path and name of the desired csv file to save the dataset.
+    :param dataset: A Dataframe object.
+    :param sep: The string value that will seperate each column in the csv file.
+    :param features: Boolean indicating if the feature names are present or not in the file
+    :param label: Boolean indicating if the dependent variable (in case it exists) should be saved along with the other variables.
+                  Will be saved at the last column
+    """
+    if not label:
+        temp_array = np.column_stack((dataset.X, dataset.y))
+    else:
+        temp_array = dataset.X
+    
+    if features:
+        cols = dataset.features
+        header = True
+    else:
+        cols = None
+        header = False
+        
+    to_save = pd.DataFrame(temp_array, columns=cols)
+        
+    to_save.to_csv(filename, sep, header=header, index=False)
+
+
+
+
