@@ -117,14 +117,13 @@ class Dataset:
         -------
         pandas.DataFrame (n_features, 5)
         """
-        data = {
-            "mean": self.get_mean(),
+        return pd.DataFrame(
+            {"mean": self.get_mean(),
             "median": self.get_median(),
+            "var": self.get_var(),
             "min": self.get_min(),
-            "max": self.get_max(),
-            "var": self.get_variance()
-        }
-        return pd.DataFrame.from_dict(data, orient="index", columns=self.features)
+            "max": self.get_max()}
+        )
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, label: str = None):
@@ -197,3 +196,27 @@ class Dataset:
         X = np.random.rand(n_samples, n_features)
         y = np.random.randint(0, n_classes, n_samples)
         return cls(X, y, features=features, label=label)
+    
+    def dropna (self):
+        """Class method that removes samples with atleast one null (NaN) value."""
+        
+        if self.X is None:
+            return
+        
+        self.X = self.X[~np.isnan(self.X).any(axis=1)]
+        
+    
+        return Dataset(self.X, self.y, self.features, self.label)
+    
+    def fillna(self, value: int):
+        """Class method that fills all NaN values with the given value
+        Args:
+            value (int): Given value to replace null values with
+        """
+        
+        if self.X is None:
+            return
+        
+        self.X = np.where(pd.isnull(self.X), value, self.X)
+        
+        return Dataset(self.X, self.y, self.features, self.label)
