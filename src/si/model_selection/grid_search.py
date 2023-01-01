@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0,"C:/Users/rodri/Desktop/Mestrado/SIB/si/src")
 import itertools
 from typing import Callable, Tuple, Dict, List, Any
 

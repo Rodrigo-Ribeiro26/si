@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0,"C:/Users/rodri/Desktop/Mestrado/SIB/si/src")
 import numpy as np
 
 from si.data.dataset import Dataset

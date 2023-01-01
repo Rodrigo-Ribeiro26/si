@@ -1,4 +1,7 @@
+import sys
+sys.path.insert(0,"C:/Users/rodri/Desktop/Mestrado/SIB/si/src")
 import numpy as np
+import matplotlib.pyplot as plt
 
 from si.data.dataset import Dataset
 from si.metrics.accuracy import accuracy
@@ -47,6 +50,7 @@ class LogisticRegression:
         # attributes
         self.theta = None
         self.theta_zero = None
+        self.cost_history = {}              # Adiciona aos modelos anteriores o atributo (parâmetro estimado) cost_history.
 
     def fit(self, dataset: Dataset) -> 'LogisticRegression':
         """
@@ -67,24 +71,35 @@ class LogisticRegression:
         # initialize the model parameters
         self.theta = np.zeros(n)
         self.theta_zero = 0
+        
 
         # gradient descent
+        threshold = 0.0001  # No caso do LogisticRegression, o critério de paragem deve ser uma diferença inferior a 0.0001.
         for i in range(self.max_iter):
-            # predicted y
-            y_pred = np.dot(dataset.X, self.theta) + self.theta_zero
+            
+            # Durante as iterações do Gradient Descent, computa a função de custo (self.cost(dataset)) e armazena o resultado no dicionário cost_history.
+            self.cost_history[i] = self.cost(dataset=dataset)
+            
+            # Quando a diferença entre o custo da iteração anterior e o custo da iteração atual for inferior a um determinado valor deves parar o Gradient Descent.
+            if i > 1 and (self.cost_history[i - 1] - self.cost_history[i] < threshold):         
+                break
+            else:
+            
+                # predicted y
+                y_pred = np.dot(dataset.X, self.theta) + self.theta_zero
 
-            # apply sigmoid function
-            y_pred = sigmoid_function(y_pred)
+                # apply sigmoid function
+                y_pred = sigmoid_function(y_pred)
 
-            # compute the gradient using the learning rate
-            gradient = (self.alpha * (1 / m)) * np.dot(y_pred - dataset.y, dataset.X)
+                # compute the gradient using the learning rate
+                gradient = (self.alpha * (1 / m)) * np.dot(y_pred - dataset.y, dataset.X)
 
-            # compute the penalty
-            penalization_term = self.alpha * (self.l2_penalty / m) * self.theta
+                # compute the penalty
+                penalization_term = self.alpha * (self.l2_penalty / m) * self.theta
 
-            # update the model parameters
-            self.theta = self.theta - gradient - penalization_term
-            self.theta_zero = self.theta_zero - (self.alpha * (1 / m)) * np.sum(y_pred - dataset.y)
+                # update the model parameters
+                self.theta = self.theta - gradient - penalization_term
+                self.theta_zero = self.theta_zero - (self.alpha * (1 / m)) * np.sum(y_pred - dataset.y)
 
         return self
 
@@ -147,6 +162,14 @@ class LogisticRegression:
         cost = cost + (self.l2_penalty * np.sum(self.theta ** 2) / (2 * dataset.shape()[0]))
         return cost
 
+    def plot_cost_history(self):
+        '''
+        O eixo Y deve conter o valor de custo enquanto o eixo X deve conter as iterações. Podes usar o dicionário cost_history.
+        '''
+        plt.plot(self.cost_history.keys(), self.cost_history.values(), "-k")
+        plt.xlabel("Iteration")
+        plt.ylabel("Cost")
+        plt.show()
 
 if __name__ == '__main__':
     # import dataset
