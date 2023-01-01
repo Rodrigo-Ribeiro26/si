@@ -1,77 +1,75 @@
 import sys
-sys.path.append("C:\\Users\\rodri\\Desktop\\Mestrado\\SIB\\si\\src\\si\\data")
+sys.path.append("C:\\Users\\rodri\\Desktop\\Mestrado\\SIB\\si\\src\\si")
     
-from dataset import Dataset
-import numpy as np
 from typing import Callable
+from statistics_.f_classification import f_classification
+from data.dataset import Dataset
+import numpy as np
 
 
 class SelectPercentile:
-    """
-    Class that filters dataset variables based on their F-scores. Selects all variables
-    with F-score values above the specified corresponding percentile.
-    """
     
-    def __init__(self, score_func:Callable[[object], tuple], percentile:int):
+    def __init__(self, percentile: float = 0.25, score_func: Callable = f_classification) -> None:
+        """Select the highest scoring features according to the percentile given.
+            The scores are computed using ANOVA F-values between label/feature.
+        Args:
+            percentile (float, optional): Percentile of features to select from all the features. Defaults to 0.25.
+            score_func (Callable, optional): Function that takes a dataset and returns the scores and p-values. Defaults to f_classification.
+        Raises:
+            ValueError: Raises ValueError if percentile isn't between 0 and 1.
         """
-        Stores the input values.
         
-        Paramaters
-        ----------
-        :param score_func: f_classification() or f_regression() functions.
-        :param percentile: Percentile value cut-off. Only F-scores above this
-                           value will remain in the filtered dataset.
-        """
+        if percentile > 1 or percentile < 0:
+            raise ValueError("Your percentile must be a float between 0 and 1")
+        
         self.score_func = score_func
-        self.perc = percentile
+        self.percentile = percentile
+        self.F = None
+        self.p = None
         
-        
-        
-    def fit(self, dataset:object):
-        """
-        Stores the F-scores and respective p-values of each variable of the given dataset.
-        
-        Paramaters
-        ----------
-        :param dataset: An instance of the Dataset class.
+    def fit(self, dataset: Dataset) -> "SelectPercentile":
+        """Fits SelectPercentile to compute the F scores and p_values.
+        Args:
+            dataset (Dataset): A dataset object
+        Returns:
+            SelectKBest: returns self
         """
         self.F, self.p = self.score_func(dataset)
         return self
     
-    
-    
-    def transform(self, dataset:object) -> object:
+    def transform(self, dataset: Dataset) -> Dataset:
+        """It transforms the dataset by selecting the highest scores according to the percentile.
+        Args:
+            dataset (Dataset): A dataset object
+        Returns:
+            Dataset: A dataset object with the percentile highest score features.
         """
-        Returns a filtered version of the given Dataset instance using their
-        F-scores. The new dataset will have only the variables with F-scores above
-        the specified percentile value.
-        
-        Paramaters
-        ----------
-        :param dataset: An instance of the Dataset class.
+        len_features = len(dataset.features)
+        percentile = int(len_features * self.percentile)
+        idxs = np.argsort(self.F)[-percentile:]
+        features = np.array(dataset.features)[idxs]
+        return Dataset(X=dataset.X[:, idxs], y=dataset.y, features=list(features), label=dataset.label)
+    
+    def fit_transform(self, dataset: Dataset) -> Dataset:
+        """It runs the fit and the transform methods of this class automatically.
+        Args:
+            dataset (Dataset): A dataset object
+        Returns:
+            Dataset: A dataset object with the percentile highest score features.
         """
-        inds = np.argsort(self.F)[::-1]
-        ord_vals = np.sort(self.F)[::-1]
-        perc_vals = np.percentile(ord_vals, self.perc)
-        
-        inds = inds[:sum(ord_vals <= perc_vals)]
-        if dataset.features:
-            features = np.array(dataset.features)[inds]
-        else:
-            features = None
-            
-        return Dataset(dataset.X[:, inds], dataset.y, features, dataset.label)
+        self.fit(dataset)
+        return self.transform(dataset)
     
     
-    
-    def fit_transform(self, dataset:object) -> object:
-        """
-        Calls the fit() and transform() methods, returning the filtered version
-        of the given Dataset instance.
-        
-        Paramaters
-        ----------
-        :param dataset: An instance of the Dataset class.
-        """
-        model = self.fit(dataset)
-        return model.transform(dataset)
+
+if __name__ == "__main__":
+    a = SelectPercentile(0.75)
+    dataset = Dataset(X=np.array([[0, 2, 0, 3],
+                                  [0, 1, 4, 3],
+                                  [0, 1, 1, 3]]),
+                      y=np.array([0, 1, 0]),
+                      features=["f1", "f2", "f3", "f4"],
+                      label="y")
+    a = a.fit_transform(dataset)
+    print(dataset.features)
+    print(a.features)  
