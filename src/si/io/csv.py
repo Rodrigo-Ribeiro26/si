@@ -1,11 +1,10 @@
 import sys
-sys.path.append("C:\\Users\\rodri\\Desktop\\Mestrado\\SIB\\si\\src\\si\\data")
+sys.path.append("C:/Users/rodri/Desktop/Mestrado/SIB/si/src/si/data")
 
 import numpy as np
 import pandas as pd
 from dataset import Dataset
 from typing import Union
-
 
 
 def read_csv(filename:str, sep:str = ",", features:bool = True, label:Union[None,int] = -1) -> object:
@@ -40,7 +39,7 @@ def read_csv(filename:str, sep:str = ",", features:bool = True, label:Union[None
         if features:
             feat = list(data.columns)          
         
- 
+    #print(feat)
     
     
     #Seperate data (X and y variables) if needed:
@@ -82,6 +81,7 @@ def write_csv(filename:str, dataset:object, sep:str = ",", features:bool = True,
     to_save = pd.DataFrame(temp_array, columns=cols)
         
     to_save.to_csv(filename, sep, header=header, index=False)
+
 
 
 

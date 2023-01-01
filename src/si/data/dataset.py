@@ -220,3 +220,12 @@ class Dataset:
         self.X = np.where(pd.isnull(self.X), value, self.X)
         
         return Dataset(self.X, self.y, self.features, self.label)
+    
+    
+    def print_dataframe(self):
+        """Prints dataframe in pandas DataFrame format
+        """
+        if self.X is None:
+            return
+
+        return pd.DataFrame(self.X, columns=self.features, index=self.y)
