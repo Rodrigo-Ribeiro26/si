@@ -4,7 +4,7 @@ import numpy as np
 
 from si.data.dataset import Dataset
 from si.metrics.accuracy import accuracy
-from si.statistics.euclidean_distance import euclidean_distance
+from si.statistics_.euclidean_distance import euclidean_distance
 
 
 class KNNClassifier:
